@@ -68,7 +68,8 @@ def load_env_file(path: str = ".env") -> None:
 load_env_file()
 
 LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME") or os.getenv("IMAGE_NAME")
-ENV_URL = os.getenv("ENV_URL")
+DEFAULT_ENV_URL = "https://praanjal-control-room.hf.space"
+ENV_URL = os.getenv("ENV_URL") or DEFAULT_ENV_URL
 API_KEY = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY") or os.getenv("API_KEY")
 
 API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
@@ -217,13 +218,13 @@ def record_episode_memory(
 
 
 async def create_env() -> DeveloperControlRoomEnv:
+    if LOCAL_IMAGE_NAME:
+        return await DeveloperControlRoomEnv.from_docker_image(LOCAL_IMAGE_NAME)
     if ENV_URL:
         env = DeveloperControlRoomEnv(base_url=ENV_URL)
         await env.connect()
         return env
-    if not LOCAL_IMAGE_NAME:
-        raise ValueError("Set ENV_URL or LOCAL_IMAGE_NAME/IMAGE_NAME before running inference.py")
-    return await DeveloperControlRoomEnv.from_docker_image(LOCAL_IMAGE_NAME)
+    raise ValueError("Set LOCAL_IMAGE_NAME/IMAGE_NAME before running inference.py")
 
 
 async def run_task(
